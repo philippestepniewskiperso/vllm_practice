@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.python-version
+
+# Secrets / env
+.env
+*.env
+!.env.example
+
+# Terraform
+infra/.terraform/
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+# keep: .terraform.lock.hcl
+# do not commit real tfvars (keep examples only)
+*.tfvars
+!*.tfvars.example
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# HF / model cache (si jamais en local)
+.cache/
+hf_cache/
+
+# Poids modele locaux (non versionnes — vLLM telecharge depuis HF au demarrage)
+models/

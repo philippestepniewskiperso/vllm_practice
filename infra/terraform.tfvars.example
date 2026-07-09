@@ -1,0 +1,17 @@
+# Copier vers terraform.tfvars et adapter.
+
+zone     = "fr-par-2"
+gpu_type = "L4-1-24G"
+
+# Modele HuggingFace telecharge par vLLM au demarrage du conteneur.
+model = "Qwen/Qwen2.5-0.5B-Instruct"
+
+# Image construite par la CI (package GHCR public). Override si besoin.
+# vllm_image = "ghcr.io/philippestepniewskiperso/vllm-qwen:latest"
+
+# Cle publique SSH (contenu du fichier .pub).
+ssh_public_key = "ssh-ed25519 AAAA... user@host"
+
+# Restreindre l'acces a votre IP. Recuperer: curl -s ifconfig.me
+allowed_ssh_cidr = "X.X.X.X/32"
+allowed_api_cidr = "X.X.X.X/32"

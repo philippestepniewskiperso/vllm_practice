@@ -1,0 +1,49 @@
+#cloud-config
+# Provisionne l'instance GPU: cle SSH + docker-compose qui lance vLLM
+# (API OpenAI-compatible sur :8000).
+# Le modele est telecharge depuis HuggingFace au premier demarrage; le cache HF
+# est monte en volume (persistant entre restarts du conteneur).
+# `restart: unless-stopped` gere crashs et reboots — pas de service systemd.
+# L'image GPU OS Scaleway fournit Docker + NVIDIA Container Toolkit.
+
+users:
+  - name: root
+    ssh_authorized_keys:
+      - ${ssh_public_key}
+
+write_files:
+  - path: /opt/vllm/docker-compose.yml
+    permissions: "0644"
+    content: |
+      services:
+        vllm:
+          image: ${vllm_image}
+          container_name: vllm
+          runtime: nvidia
+          ipc: host
+          ports:
+            - "8000:8000"
+          volumes:
+            - /root/.cache/huggingface:/root/.cache/huggingface
+          deploy:
+            resources:
+              reservations:
+                devices:
+                  - driver: nvidia
+                    count: all
+                    capabilities: [gpu]
+          command:
+            - --model
+            - ${model}
+            - --max-model-len
+            - "${max_model_len}"
+            - --gpu-memory-utilization
+            - "${gpu_mem_util}"
+            - --host
+            - "0.0.0.0"
+            - --port
+            - "8000"
+          restart: unless-stopped
+
+runcmd:
+  - docker compose -f /opt/vllm/docker-compose.yml up -d
