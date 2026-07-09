@@ -1,0 +1,55 @@
+# Build l'image vLLM custom (sans poids) et push vers GHCR.
+# Auth via GITHUB_TOKEN natif: aucun secret a configurer.
+#
+# Premier push: le package GHCR est prive par defaut -> le rendre public
+# (Packages -> vllm-qwen -> Package settings -> Change visibility) pour que
+# l'instance Scaleway puisse pull sans authentification.
+
+name: build-push-vllm
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "deploy/Dockerfile"
+      - ".github/workflows/build-push-vllm.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/vllm-qwen
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # L'image de base vllm/vllm-openai fait ~20 GB decompressee: le runner
+      # GitHub standard (~14 GB libres) ne suffit pas sans nettoyage.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo docker image prune -af
+          df -h /
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push
+        uses: docker/build-push-action@v6
+        with:
+          context: deploy
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
